@@ -1,0 +1,24 @@
+sbse phle create new terminal for frontend folder using + and then cd frontend then for react boilerplate npm create vite@latest .
+
+here we'll use scss(extra features) instead of css so remove assets folder,index.css and app.css introduce style.css and import it in main.jsx but isko use krne k liye npm i saas
+
+now for navigation react router dom setup ex: /login,/register pe kya dikhne wala hai iske liye npm i react-router so hm routes app.routes.jsx me likhenge
+
+frontend backend interaction k liye hme npm i axios
+
+#React 4-Layer Folder Architecture:
+
+1. UI Layer: user ko kya dikhega aur wo kaise navigate krega
+=>componets
+=>pages
+
+2. Hook : manages state and api layer
+=>hooks
+
+3. State : frontend pe user ka data store krne k liye or state manage krne k liye, logged in user ka data hm kaise manage krenge, api call me time lgta to utne der hm user ko loading state dikayenge, user ki state and loading state ko manage krte iss se
+=>auth.context.jsx
+=>ai.contect.jsx
+
+4. Api: frontend backend se kaise interact krega
+=>services
+  =>auth.api.js

@@ -1,0 +1,19 @@
+npm init -y (node js appn initiate ho jati h)
+npm i express mongoose dotenv (for .env file)
+
+app.js is mainly used for two things first server ko initiate krna ,server ka ek instnce bnana and second middlewares and routes ka use krne k liye,server ko start krne k liye server.js
+
+In mongodb,cluster mtlb jis machine pe aapka database chlne wala hai uska configuration kya rhne wala hai storage kya rhne wali hai cpu konsa rhega etc,In mongodba atlas jo hmne cluster create kiya hai usme security me database and netwroks me ip access list me hmne 0.0.0.0 isliye dala taki hm sare ips se isko access kr ske but production me hm sirf server ka ip address allow krte
+
+mongodb+srv://shreyashsrivastava744_db_user:<db_password>@interview-ai-cluster.xo41k6o.mongodb.net/ ye cluster se connect krne ki link hoti database se nhi isme backslash k baad hm apne db ka name likhte to db create
+
+server start krne k liye npx nodemon server.js
+
+server start ho gya but db se connect to iske liye hm src me config me database.js bnate
+
+bcryptjs hashing k liye ,jsonwebtoken jwt tokens create krne k liye and co0kie-parser token ko cookie me set krne k liye aur token se cookie ko read krne k liye
+npm i bcryptjs jsonwebtoken cookie-parser
+
+package.json me script add kr di ab npm run dev se server start
+
+logout k liye sirf cookie se token clear krna is not enough as kisi ne xyz tarike se user ka token chura liya to hence token blacklisting comes to picture
