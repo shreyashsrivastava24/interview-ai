@@ -17,3 +17,19 @@ npm i bcryptjs jsonwebtoken cookie-parser
 package.json me script add kr di ab npm run dev se server start
 
 logout k liye sirf cookie se token clear krna is not enough as kisi ne xyz tarike se user ka token chura liya to hence token blacklisting comes to picture
+
+-------------------------------------------------------------------------------
+
+google pe search kro gemini docs and then quickstart se js select krne pe ye mila npm install @google/genai...npm install @google/genai isliye karte hain taaki Node.js project se Google ke Gemini AI models ko access kar sako.
+Ye package Google ka official SDK hai.
+
+google ai studio se api key le liya create project kr k
+
+npm i zod.........zod ka use AI se structured (fixed JSON) output lene aur data validate karne ke liye hota hai.
+
+npm i zod-to-json-schema.........zod-to-json-schema ka use Zod schema ko JSON Schema format me convert karne ke liye hota hai.
+
+file k liye npm i multer
+pdf k andr ka content/data read krne k liye npm i pdf-parse
+
+npm install puppeteer
