@@ -1,31 +1,58 @@
-const pdfParse = require("pdf-parse")
+// Import the PDFParse class from v2 of the pdf-parse package
+const { PDFParse } = require("pdf-parse")
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
-
-
+/**
+ * Backward compatibility helper to mimic the classic v1 pdf-parse function call.
+ * This satisfies the controller's requirement of calling `await pdfParse(req.file.buffer)`
+ * while remaining fully compatible with the v2 library currently installed in node_modules.
+ * 
+ * @param {Buffer} buffer The PDF file buffer to parse
+ * @returns {Promise<{text: string}>} Result containing parsed text
+ */
+async function pdfParse(buffer) {
+    const parser = new PDFParse({ data: buffer })
+    try {
+        const result = await parser.getText()
+        return result
+    } finally {
+        // Always destroy the parser instance to release memory resources
+        await parser.destroy()
+    }
+}
 
 /**
  * @description Controller to generate interview report based on user self description, resume and job description.
  */
 async function generateInterViewReportController(req, res) {
 
-    const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+    // Parse the PDF buffer using our compatibility wrapper function
+    const data = await pdfParse(req.file.buffer)
+    const resumeContent = data.text
     const { selfDescription, jobDescription } = req.body
 
+    // Call the AI service helper with the parsed resume text content
     const interViewReportByAi = await generateInterviewReport({
-        resume: resumeContent.text,
+        resume: resumeContent,
         selfDescription,
         jobDescription
     })
 
+    // Ensure title is provided - extract from job description if AI doesn't provide one
+    const title = interViewReportByAi.title || jobDescription.split('\n')[0] || "Interview Report"
+
+    // Save the generated report along with inputs in the MongoDB database
     const interviewReport = await interviewReportModel.create({
         user: req.user.id,
-        resume: resumeContent.text,
+        resume: resumeContent,
         selfDescription,
         jobDescription,
-        ...interViewReportByAi
+        ...interViewReportByAi,
+        title
     })
+
+    console.log(interViewReportByAi)
 
     res.status(201).json({
         message: "Interview report generated successfully.",

@@ -1,13 +1,24 @@
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
-const { zodToJsonSchema } = require("zod-to-json-schema")
+// Import the original zodToJsonSchema from the package
+const { zodToJsonSchema: originalZodToJsonSchema } = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
 
+// Initialize the Google GenAI client
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
 
+// Custom wrapper to solve compatibility issues between Zod 4.x and zod-to-json-schema.
+// Zod 4 schemas have a built-in .toJSONSchema() method which we use directly, fallback to original if needed.
+const zodToJsonSchema = (schema, options) => {
+    if (schema && typeof schema.toJSONSchema === "function") {
+        return schema.toJSONSchema()
+    }
+    return originalZodToJsonSchema(schema, options)
+}
 
+// Zod Schema representing the interview report structure
 const interviewReportSchema = z.object({
     matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job describe"),
     technicalQuestions: z.array(z.object({
@@ -32,17 +43,37 @@ const interviewReportSchema = z.object({
     title: z.string().describe("The title of the job for which the interview report is generated"),
 })
 
+/**
+ * Generates an interview report based on resume, self description and job description.
+ */
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
+    const prompt = `
+Act as an expert Technical Interviewer and Career Coach. 
+Your task is to analyze the provided Resume and Job Description (JD) to generate a structured Interview Preparation Report.
 
+### INPUT DATA:
+- Resume: ${resume}
+- Self Description: ${selfDescription}
+- Job Description: ${jobDescription}
 
-    const prompt = `Generate an interview report for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
-`
+### GOAL:
+Based on the candidate's background and the JD requirements, generate a JSON object that matches the schema exactly.
+1. Identify the 'matchScore' based on skills.
+2. Generate 'technicalQuestions' and 'behavioralQuestions' tailored to this specific candidate's gaps and strengths.
+3. Identify 'skillGaps' (e.g., if the JD asks for .NET but they only know Node.js).
+4. Create a 7-day 'preparationPlan' to help this candidate bridge those gaps.
 
+### OUTPUT INSTRUCTIONS:
+- Generate ONLY valid JSON.
+- DO NOT use keys like 'candidate_details' or 'job_role'.
+- USE ONLY these top-level keys: "matchScore", "technicalQuestions", "behavioralQuestions", "skillGaps", "preparationPlan", "title".
+- Ensure 'severity' is strictly one of: "low", "medium", or "high".
+- No conversational text before or after the JSON.
+`;
+
+    // Request response from Gemini 2.5 Flash using JSON schema for structured output format validation
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -50,13 +81,17 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
         }
     })
 
-    return JSON.parse(response.text)
+    // Parse and validate the response structure using the Zod schema before returning
+    const report = interviewReportSchema.parse(
+        JSON.parse(response.text)
+    )
 
-
+    return report
 }
 
-
-
+/**
+ * Helper function to generate PDF buffer from HTML content via Puppeteer.
+ */
 async function generatePdfFromHtml(htmlContent) {
     const browser = await puppeteer.launch()
     const page = await browser.newPage();
@@ -76,8 +111,10 @@ async function generatePdfFromHtml(htmlContent) {
     return pdfBuffer
 }
 
+/**
+ * Generates a resume PDF based on resume text, self description and job description.
+ */
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
-
     const resumePdfSchema = z.object({
         html: z.string().describe("The HTML content of the resume which can be converted to PDF using any library like puppeteer")
     })
@@ -95,8 +132,9 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `
 
+    // Call Gemini 2.5 Flash with the responseSchema defined by the local schema
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -104,13 +142,14 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
         }
     })
 
-
     const jsonContent = JSON.parse(response.text)
 
     const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
 
     return pdfBuffer
-
 }
 
-module.exports = { generateInterviewReport, generateResumePdf }
+module.exports = {
+    generateInterviewReport,
+    generateResumePdf
+}
