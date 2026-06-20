@@ -22,3 +22,5 @@ frontend backend interaction k liye hme npm i axios
 4. Api: frontend backend se kaise interact krega
 =>services
   =>auth.api.js
+
+  #design generate krne k liye google stitch

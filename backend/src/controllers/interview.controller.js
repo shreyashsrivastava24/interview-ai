@@ -52,7 +52,7 @@ async function generateInterViewReportController(req, res) {
         title
     })
 
-    console.log(interViewReportByAi)
+    //console.log(interViewReportByAi)
 
     res.status(201).json({
         message: "Interview report generated successfully.",
@@ -108,6 +108,7 @@ async function generateResumePdfController(req, res) {
         return res.status(404).json({
             message: "Interview report not found."
         })
+
     }
 
     const { resume, jobDescription, selfDescription } = interviewReport
